@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  golang-go-redis:
+    build:
+      context: .
+    container_name: ${PROJECT_NAME}
+    restart: always
+    environment:
+      - ENV=${ENV} # 各站環境變數
+      - SERVICE=all
+      - PROJECT_NAME=${PROJECT_NAME} # 專案名稱
+    working_dir: /go/src/${PROJECT_NAME}
+    volumes:
+      - .:/go/src/${PROJECT_NAME}
+      - ${IMG}:/app/images
+    labels:
+      - "traefik.http.routers.golang-${PROJECT_NAME}.rule=Host(`${PROJECT_NAME}.local.com`)"
+      - "traefik.http.services.golang-${PROJECT_NAME}.loadbalancer.server.port=8080"
+    networks:
+      - web_service
+    command: "air -c .air.toml"
+
+  redis:
+    image: redis:alpine
+    container_name: redis_${PROJECT_NAME}
+    # 設定最大的TCP連線
+    sysctls:
+      net.core.somaxconn: 4096
+    restart: always
+    volumes:
+      - /${USER_PATH}/Redis/${PROJECT_NAME}:/data
+    command: redis-server /usr/local/etc/redis/redis.conf
+    # 指定使用那一條網路
+    networks:
+      - web_service
+
+networks:
+  web_service:
+    external: true
