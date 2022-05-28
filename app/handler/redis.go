@@ -7,23 +7,24 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 )
 
 func Ping(c *gin.Context) {
 	gClient := cache.RedisConn()
-	defer gClient.Close()
 	for i := 0; i < 10; i++ {
 		gClient.Ping().Result()
+		gClient.Ping().Result()
 	}
-	// printRedisPool(gClient.PoolStats())
+	printRedisPool(gClient.PoolStats())
 	c.JSON(http.StatusOK, gin.H{
 		"time": time.Now(),
+		// "res":  res,
 	})
 }
 
 func SetValue(c *gin.Context) {
 	gClient := cache.RedisConn()
-	defer gClient.Close()
 	err := gClient.Set("key", "value", 0).Err() // => SET key value 0 數字代表過期秒數，在這裡0為永不過期
 	if err != nil {
 		panic(err)
@@ -33,7 +34,6 @@ func SetValue(c *gin.Context) {
 
 func GetValue(c *gin.Context) {
 	gClient := cache.RedisConn()
-	defer gClient.Close()
 	var val string
 	var err error
 	for i := 0; i < 10; i++ {
@@ -53,7 +53,6 @@ func GetValue(c *gin.Context) {
 func PrintRedisPoolInfo(c *gin.Context) {
 
 	gClient := cache.RedisConn()
-	defer gClient.Close()
 	stats := gClient.PoolStats()
 	str := fmt.Sprintf("Hits=%d Misses=%d Timeouts=%d TotalConns=%d IdleConns=%d StaleConns=%d\n",
 		stats.Hits, stats.Misses, stats.Timeouts, stats.TotalConns, stats.IdleConns, stats.StaleConns)
@@ -62,4 +61,9 @@ func PrintRedisPoolInfo(c *gin.Context) {
 		"result": str,
 	})
 
+}
+
+func printRedisPool(stats *redis.PoolStats) {
+	fmt.Printf("Hits=%d Misses=%d Timeouts=%d TotalConns=%d IdleConns=%d StaleConns=%d\n",
+		stats.Hits, stats.Misses, stats.Timeouts, stats.TotalConns, stats.IdleConns, stats.StaleConns)
 }
