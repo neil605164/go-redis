@@ -47,17 +47,15 @@ func GetValue(c *gin.Context) {
 
 }
 
-func RedisConnTest(c *gin.Context) {
+func PrintRedisPoolInfo(c *gin.Context) {
 
 	gClient := cache.RedisConn()
-	for i := 0; i <= 10; i++ {
-		gClient.Ping().Result()
-		fmt.Println("success doing", i)
-	}
-
-	cache.PrintRedisPool(gClient.PoolStats())
+	stats := gClient.PoolStats()
+	str := fmt.Sprintf("Hits=%d Misses=%d Timeouts=%d TotalConns=%d IdleConns=%d StaleConns=%d\n",
+		stats.Hits, stats.Misses, stats.Timeouts, stats.TotalConns, stats.IdleConns, stats.StaleConns)
 
 	c.JSON(http.StatusOK, gin.H{
-		"time": time.Now(),
+		"result": str,
 	})
+
 }
