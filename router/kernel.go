@@ -8,5 +8,5 @@ import (
 
 func RouteProvider(r *gin.Engine) {
 	r.GET("/ping", handler.Ping)
-	r.GET("/redis_conn", handler.RedisConnTest)
+	r.GET("/redis-conn", handler.RedisConnTest)
 }

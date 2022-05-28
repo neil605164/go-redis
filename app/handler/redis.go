@@ -4,54 +4,60 @@ import (
 	"fmt"
 	"go-redis/app/cache"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis"
 )
 
 func Ping(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "pong",
+	gClient := cache.RedisConn()
+	for i := 0; i < 10; i++ {
+		gClient.Ping().Result()
+	}
+	// printRedisPool(gClient.PoolStats())
+	c.JSON(http.StatusOK, gin.H{
+		"time": time.Now(),
 	})
 }
 
-func SetData(c *gin.Context) {
+func SetValue(c *gin.Context) {
+	gClient := cache.RedisConn()
+	err := gClient.Set("key", "value", 0).Err() // => SET key value 0 數字代表過期秒數，在這裡0為永不過期
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+func GetValue(c *gin.Context) {
+	gClient := cache.RedisConn()
+	var val string
+	var err error
+	for i := 0; i < 10; i++ {
+		val, err = gClient.Get("key").Result() // => GET key
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("key %v", i, val)
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "set into redis",
+		"key": val,
 	})
+
 }
 
 func RedisConnTest(c *gin.Context) {
 
 	gClient := cache.RedisConn()
-	gClient.Ping().Result()
-	printRedisPool(gClient.PoolStats())
+	for i := 0; i <= 10; i++ {
+		gClient.Ping().Result()
+		fmt.Println("success doing", i)
+	}
 
-}
+	cache.PrintRedisPool(gClient.PoolStats())
 
-func printRedisPool(stats *redis.PoolStats) {
-	fmt.Printf("Hits=%d Misses=%d Timeouts=%d TotalConns=%d IdleConns=%d StaleConns=%d\n",
-		stats.Hits, stats.Misses, stats.Timeouts, stats.TotalConns, stats.IdleConns, stats.StaleConns)
-}
-
-func printRedisOption(opt *redis.Options) {
-	fmt.Printf("Network=%v\n", opt.Network)
-	fmt.Printf("Addr=%v\n", opt.Addr)
-	fmt.Printf("Password=%v\n", opt.Password)
-	fmt.Printf("DB=%v\n", opt.DB)
-	fmt.Printf("MaxRetries=%v\n", opt.MaxRetries)
-	fmt.Printf("MinRetryBackoff=%v\n", opt.MinRetryBackoff)
-	fmt.Printf("MaxRetryBackoff=%v\n", opt.MaxRetryBackoff)
-	fmt.Printf("DialTimeout=%v\n", opt.DialTimeout)
-	fmt.Printf("ReadTimeout=%v\n", opt.ReadTimeout)
-	fmt.Printf("WriteTimeout=%v\n", opt.WriteTimeout)
-	fmt.Printf("PoolSize=%v\n", opt.PoolSize)
-	fmt.Printf("MinIdleConns=%v\n", opt.MinIdleConns)
-	fmt.Printf("MaxConnAge=%v\n", opt.MaxConnAge)
-	fmt.Printf("PoolTimeout=%v\n", opt.PoolTimeout)
-	fmt.Printf("IdleTimeout=%v\n", opt.IdleTimeout)
-	fmt.Printf("IdleCheckFrequency=%v\n", opt.IdleCheckFrequency)
-	fmt.Printf("TLSConfig=%v\n", opt.TLSConfig)
-
+	c.JSON(http.StatusOK, gin.H{
+		"time": time.Now(),
+	})
 }

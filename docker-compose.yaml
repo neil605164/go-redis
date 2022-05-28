@@ -30,6 +30,7 @@ services:
     restart: always
     volumes:
       - /${USER_PATH}/Redis/${PROJECT_NAME}:/data
+      - ./docker/redis.conf:/usr/local/etc/redis/redis.conf
     command: redis-server /usr/local/etc/redis/redis.conf
     # 指定使用那一條網路
     networks:
